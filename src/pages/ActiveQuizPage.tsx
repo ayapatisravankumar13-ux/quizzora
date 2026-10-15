@@ -74,10 +74,11 @@ export const ActiveQuizPage: React.FC<ActiveQuizPageProps> = ({ onNavigate }) =>
               <button
                 type="button"
                 onClick={() => setShowMobileNav(!showMobileNav)}
-                className="lg:hidden p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700"
+                className="lg:hidden px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-1.5 border border-slate-200 cursor-pointer text-xs font-bold"
                 aria-label="Toggle Question Navigator"
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-4 h-4 text-indigo-600" />
+                <span>Qs {currentQuestionIndex + 1}/30</span>
               </button>
 
               <div className="hidden sm:block">
@@ -320,14 +321,33 @@ export const ActiveQuizPage: React.FC<ActiveQuizPageProps> = ({ onNavigate }) =>
       {showMobileNav && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex justify-end">
           <div className="w-full max-w-xs bg-white h-full p-6 shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-4">
-              <h3 className="font-bold text-slate-900 text-base">Question Navigator</h3>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Question Navigator</h3>
+                <p className="text-[11px] text-indigo-600 font-semibold">{answeredCount} of {totalQuestions} Answered</p>
+              </div>
               <button
                 onClick={() => setShowMobileNav(false)}
-                className="p-1 rounded-lg text-slate-500 hover:bg-slate-100"
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            {/* Mobile Legend */}
+            <div className="grid grid-cols-3 gap-1 mb-3 text-[10px] font-semibold text-slate-600">
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-sm bg-indigo-600" />
+                <span>Done</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-sm bg-slate-100 border border-slate-300" />
+                <span>Pending</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-sm border border-indigo-600 bg-white" />
+                <span>Active</span>
+              </div>
             </div>
 
             <div className="grid grid-cols-5 gap-2 overflow-y-auto flex-1 pr-1">

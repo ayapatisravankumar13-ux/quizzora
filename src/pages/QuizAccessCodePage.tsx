@@ -118,7 +118,7 @@ export const QuizAccessCodePage: React.FC<QuizAccessCodePageProps> = ({ onNaviga
                   placeholder="Enter code provided by coordinator"
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 text-sm font-mono tracking-wider bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 text-base sm:text-sm font-mono tracking-wider bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                 />
               </div>
               <p className="text-[11px] text-slate-500 mt-1.5">

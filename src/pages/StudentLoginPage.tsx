@@ -111,7 +111,7 @@ export const StudentLoginPage: React.FC<StudentLoginPageProps> = ({ onNavigate }
                   placeholder="e.g. John Doe"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 text-base sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
               </div>
             </div>
@@ -132,7 +132,7 @@ export const StudentLoginPage: React.FC<StudentLoginPageProps> = ({ onNavigate }
                   placeholder="e.g. 21CS042"
                   value={rollNumber}
                   onChange={(e) => setRollNumber(e.target.value.toUpperCase())}
-                  className="w-full pl-10 pr-4 py-3 text-sm font-mono uppercase bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 text-base sm:text-sm font-mono uppercase bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
               </div>
               <p className="text-[11px] text-slate-500 mt-1">
@@ -156,7 +156,7 @@ export const StudentLoginPage: React.FC<StudentLoginPageProps> = ({ onNavigate }
                   placeholder="e.g. student@college.edu"
                   value={emailId}
                   onChange={(e) => setEmailId(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 text-base sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
               </div>
             </div>

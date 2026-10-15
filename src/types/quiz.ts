@@ -49,11 +49,30 @@ export interface QuizAttempt {
 export interface QuizSettings {
   quizTitle: string;
   accessCode: string;
+  adminPasskey?: string;
   isOpen: boolean;
   durationMinutes: number;
   allowReviewAfterClose: boolean;
   updatedAt: string;
   updatedBy: string;
+}
+
+export interface AdminMember {
+  id: string;
+  email: string;
+  name: string;
+  role: 'super_admin' | 'admin';
+  addedAt: string;
+}
+
+export interface QuestionAttemptDetail {
+  id: number;
+  question: string;
+  codeSnippet?: string;
+  options: QuestionOption[];
+  selectedAnswer?: 'A' | 'B' | 'C' | 'D';
+  correctAnswer: 'A' | 'B' | 'C' | 'D';
+  isCorrect: boolean;
 }
 
 export interface AuditLogEntry {

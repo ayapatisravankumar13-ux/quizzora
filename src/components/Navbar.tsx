@@ -10,7 +10,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
   const { student, isTimerRunning, resetStudentSession } = useQuiz();
-  const { user, isAdmin, signOutAdmin } = useAuth();
+  const { user, isAdmin, adminEmail, signOutAdmin } = useAuth();
 
   const handleStudentExit = () => {
     if (isTimerRunning) {
@@ -61,10 +61,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             )}
 
             {/* Admin session pill */}
-            {user && isAdmin && (
+            {(user || adminEmail) && isAdmin && (
               <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-50 border border-purple-200 text-xs text-purple-800">
                 <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
-                <span className="font-medium truncate max-w-[150px]">{user.email}</span>
+                <span className="font-medium truncate max-w-[150px]">{adminEmail || user?.email}</span>
                 <span className="font-semibold px-1 rounded bg-purple-200 text-[10px]">ADMIN</span>
               </div>
             )}
@@ -94,13 +94,13 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                 >
                   Competition Home
                 </button>
-                {user && (
+                {(user || adminEmail) && (
                   <button
                     onClick={async () => {
                       await signOutAdmin();
                       onNavigate('home');
                     }}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-50 border border-red-200 transition-colors flex items-center gap-1"
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-50 border border-red-200 transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     Sign Out

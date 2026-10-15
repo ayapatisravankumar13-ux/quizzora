@@ -18,6 +18,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const globalSettings: QuizSettings = {
   quizTitle: 'Quizzora Python & Technology Quiz',
   accessCode: 'QUIZ2025',
+  adminPasskey: 'ADMIN2025',
   isOpen: true,
   durationMinutes: 30,
   allowReviewAfterClose: false,
@@ -45,9 +46,93 @@ const auditLogs: AuditLogEntry[] = [
 // Rate limiting for access code attempts
 const accessCodeRateLimits = new Map<string, { count: number; resetAt: number }>();
 
-const AUTHORIZED_ADMIN_EMAILS = new Set([
-  'ayapatisravankumar13@gmail.com'
-]);
+export interface AdminMemberRecord {
+  id: string;
+  email: string;
+  name: string;
+  role: 'super_admin' | 'admin';
+  addedAt: string;
+}
+
+// Exactly 10 Authorized Admin Members
+const adminMembersList: AdminMemberRecord[] = [
+  {
+    id: 'admin-1',
+    email: 'ayapatisravankumar13@gmail.com',
+    name: 'Sravan Kumar (Lead Organizer)',
+    role: 'super_admin',
+    addedAt: new Date().toISOString()
+  },
+  {
+    id: 'admin-2',
+    email: 'coordinator1@quizzora.edu',
+    name: 'Quiz Coordinator 1',
+    role: 'admin',
+    addedAt: new Date().toISOString()
+  },
+  {
+    id: 'admin-3',
+    email: 'coordinator2@quizzora.edu',
+    name: 'Quiz Coordinator 2',
+    role: 'admin',
+    addedAt: new Date().toISOString()
+  },
+  {
+    id: 'admin-4',
+    email: 'evaluator1@quizzora.edu',
+    name: 'Technical Evaluator 1',
+    role: 'admin',
+    addedAt: new Date().toISOString()
+  },
+  {
+    id: 'admin-5',
+    email: 'evaluator2@quizzora.edu',
+    name: 'Technical Evaluator 2',
+    role: 'admin',
+    addedAt: new Date().toISOString()
+  },
+  {
+    id: 'admin-6',
+    email: 'faculty1@quizzora.edu',
+    name: 'Faculty Incharge 1',
+    role: 'admin',
+    addedAt: new Date().toISOString()
+  },
+  {
+    id: 'admin-7',
+    email: 'faculty2@quizzora.edu',
+    name: 'Faculty Incharge 2',
+    role: 'admin',
+    addedAt: new Date().toISOString()
+  },
+  {
+    id: 'admin-8',
+    email: 'proctor1@quizzora.edu',
+    name: 'Exam Proctor 1',
+    role: 'admin',
+    addedAt: new Date().toISOString()
+  },
+  {
+    id: 'admin-9',
+    email: 'proctor2@quizzora.edu',
+    name: 'Exam Proctor 2',
+    role: 'admin',
+    addedAt: new Date().toISOString()
+  },
+  {
+    id: 'admin-10',
+    email: 'committee@quizzora.edu',
+    name: 'Competition Committee',
+    role: 'admin',
+    addedAt: new Date().toISOString()
+  }
+];
+
+function isEmailAuthorizedAdmin(email?: string): boolean {
+  if (!email) return false;
+  const norm = normalizeEmail(email);
+  return adminMembersList.some(m => normalizeEmail(m.email) === norm);
+}
 
 function normalizeRoll(roll: string): string {
   return roll.trim().toUpperCase();
@@ -548,10 +633,13 @@ async function startServer() {
   // -------------------------------------------------------------
   // Admin Operations (Protected)
   // -------------------------------------------------------------
+  // -------------------------------------------------------------
+  // Admin Operations (Protected)
+  // -------------------------------------------------------------
   function verifyAdminAuth(req: Request): boolean {
     const adminEmail = req.headers['x-admin-email'] as string;
     if (!adminEmail) return false;
-    return AUTHORIZED_ADMIN_EMAILS.has(normalizeEmail(adminEmail));
+    return isEmailAuthorizedAdmin(adminEmail);
   }
 
   // Admin Check
@@ -561,11 +649,143 @@ async function startServer() {
       return res.status(400).json({ authorized: false });
     }
 
-    const isAuthorized = AUTHORIZED_ADMIN_EMAILS.has(normalizeEmail(email));
+    const isAuthorized = isEmailAuthorizedAdmin(email);
+    const member = adminMembersList.find(m => normalizeEmail(m.email) === normalizeEmail(email));
     return res.json({
       authorized: isAuthorized,
-      role: isAuthorized ? 'super_admin' : 'none'
+      role: member ? member.role : (isAuthorized ? 'admin' : 'none'),
+      member: member || null
     });
+  });
+
+  // Coordinator Passkey Login (Reliable on mobile phones & laptops)
+  app.post('/api/admin/login-passkey', (req: Request, res: Response): any => {
+    const { email, passkey } = req.body;
+
+    if (!email || !passkey) {
+      return res.status(400).json({ error: 'Please enter your Admin Email and Security Passkey.' });
+    }
+
+    const cleanEmail = normalizeEmail(email);
+    const member = adminMembersList.find(m => normalizeEmail(m.email) === cleanEmail);
+
+    if (!member) {
+      return res.status(403).json({
+        error: `The email "${cleanEmail}" is not in the list of authorized admin committee members. Please contact the lead coordinator.`
+      });
+    }
+
+    const expectedPasskey = (globalSettings.adminPasskey || 'ADMIN2025').trim();
+    if (String(passkey).trim() !== expectedPasskey) {
+      return res.status(401).json({
+        error: 'Invalid Admin Passkey. Please verify with your competition coordinator.'
+      });
+    }
+
+    logAudit(
+      'ADMIN_LOGIN',
+      `Admin member ${member.name} (${cleanEmail}) logged in successfully`,
+      cleanEmail
+    );
+
+    return res.json({
+      success: true,
+      member: {
+        id: member.id,
+        email: member.email,
+        name: member.name,
+        role: member.role
+      }
+    });
+  });
+
+  // Get All 10 Admin Members
+  app.get('/api/admin/members', (req: Request, res: Response): any => {
+    if (!verifyAdminAuth(req)) {
+      return res.status(403).json({ error: 'Access Denied: Admin authorization required.' });
+    }
+    return res.json({
+      members: adminMembersList,
+      maxAllowed: 10,
+      currentCount: adminMembersList.length
+    });
+  });
+
+  // Add/Update Admin Member (Max 10)
+  app.post('/api/admin/members/add', (req: Request, res: Response): any => {
+    if (!verifyAdminAuth(req)) {
+      return res.status(403).json({ error: 'Access Denied.' });
+    }
+
+    const { email, name, role } = req.body;
+    const adminEmail = req.headers['x-admin-email'] as string;
+
+    if (!email || !normalizeEmail(email)) {
+      return res.status(400).json({ error: 'Valid email required for admin member.' });
+    }
+
+    const cleanEmail = normalizeEmail(email);
+    const existingIndex = adminMembersList.findIndex(m => normalizeEmail(m.email) === cleanEmail);
+
+    if (existingIndex >= 0) {
+      // Update existing
+      adminMembersList[existingIndex].name = name ? String(name).trim() : adminMembersList[existingIndex].name;
+      adminMembersList[existingIndex].role = role === 'super_admin' ? 'super_admin' : 'admin';
+    } else {
+      // Add new if under 10
+      if (adminMembersList.length >= 10) {
+        return res.status(400).json({
+          error: 'Maximum of 10 admin members reached. Please remove or update an existing member.'
+        });
+      }
+
+      adminMembersList.push({
+        id: `admin-${Date.now()}`,
+        email: cleanEmail,
+        name: name ? String(name).trim() : cleanEmail.split('@')[0],
+        role: role === 'super_admin' ? 'super_admin' : 'admin',
+        addedAt: new Date().toISOString()
+      });
+    }
+
+    logAudit(
+      'ADMIN_MEMBER_MODIFIED',
+      `Admin list updated for ${cleanEmail}`,
+      adminEmail || 'admin'
+    );
+
+    return res.json({ success: true, members: adminMembersList });
+  });
+
+  // Remove Admin Member
+  app.post('/api/admin/members/remove', (req: Request, res: Response): any => {
+    if (!verifyAdminAuth(req)) {
+      return res.status(403).json({ error: 'Access Denied.' });
+    }
+
+    const { email } = req.body;
+    const adminEmail = req.headers['x-admin-email'] as string;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email required.' });
+    }
+
+    const cleanEmail = normalizeEmail(email);
+    if (cleanEmail === 'ayapatisravankumar13@gmail.com') {
+      return res.status(400).json({ error: 'Cannot remove the primary competition organizer.' });
+    }
+
+    const idx = adminMembersList.findIndex(m => normalizeEmail(m.email) === cleanEmail);
+    if (idx >= 0) {
+      adminMembersList.splice(idx, 1);
+      logAudit(
+        'ADMIN_MEMBER_REMOVED',
+        `Admin member ${cleanEmail} removed`,
+        adminEmail || 'admin'
+      );
+    }
+
+    return res.json({ success: true, members: adminMembersList });
   });
 
   // Admin Overview Stats
@@ -598,17 +818,18 @@ async function startServer() {
       highestScore,
       quizStatus: globalSettings.isOpen ? 'Open' : 'Closed',
       accessCode: globalSettings.accessCode,
-      durationMinutes: globalSettings.durationMinutes
+      durationMinutes: globalSettings.durationMinutes,
+      totalAdminMembers: adminMembersList.length
     });
   });
 
-  // Admin All Submissions
+  // Admin All Submissions with Ranking & Sorting
   app.get('/api/admin/submissions', (req: Request, res: Response): any => {
     if (!verifyAdminAuth(req)) {
       return res.status(403).json({ error: 'Access Denied: Admin authorization required.' });
     }
 
-    const { search, status } = req.query;
+    const { search, status, sortBy } = req.query;
     let list = Array.from(attemptsStore.values());
 
     if (status && status !== 'all') {
@@ -624,11 +845,68 @@ async function startServer() {
       );
     }
 
-    // Sort latest first
-    list.sort((a, b) => (b.submittedAt || b.startTime) - (a.submittedAt || a.startTime));
+    // Apply sorting
+    if (sortBy === 'score_desc' || !sortBy) {
+      list.sort((a, b) => {
+        const scoreDiff = (b.score ?? -1) - (a.score ?? -1);
+        if (scoreDiff !== 0) return scoreDiff;
+        return (a.timeTakenSeconds ?? 9999) - (b.timeTakenSeconds ?? 9999);
+      });
+    } else if (sortBy === 'score_asc') {
+      list.sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+    } else if (sortBy === 'roll') {
+      list.sort((a, b) => a.studentRoll.localeCompare(b.studentRoll));
+    } else if (sortBy === 'time') {
+      list.sort((a, b) => (a.timeTakenSeconds ?? 9999) - (b.timeTakenSeconds ?? 9999));
+    } else if (sortBy === 'latest') {
+      list.sort((a, b) => (b.submittedAt || b.startTime) - (a.submittedAt || a.startTime));
+    }
+
+    // Attach ranks to submitted attempts
+    let currentRank = 1;
+    const rankedList = list.map((item) => {
+      if (item.status === 'submitted') {
+        return { ...item, rank: currentRank++ };
+      }
+      return { ...item, rank: null };
+    });
 
     return res.json({
-      submissions: list
+      submissions: rankedList,
+      totalCount: rankedList.length
+    });
+  });
+
+  // Detailed Question-by-Question Breakdown for Admin Review
+  app.get('/api/admin/attempt-details/:attemptId', (req: Request, res: Response): any => {
+    if (!verifyAdminAuth(req)) {
+      return res.status(403).json({ error: 'Access Denied.' });
+    }
+
+    const { attemptId } = req.params;
+    const attempt = attemptsStore.get(attemptId);
+
+    if (!attempt) {
+      return res.status(404).json({ error: 'Attempt not found.' });
+    }
+
+    const breakdown = QUIZ_QUESTIONS.map(q => {
+      const selectedAnswer = attempt.answers[q.id];
+      const isCorrect = selectedAnswer === q.correctAnswer;
+      return {
+        id: q.id,
+        question: q.question,
+        codeSnippet: q.codeSnippet,
+        options: q.options,
+        selectedAnswer: selectedAnswer || null,
+        correctAnswer: q.correctAnswer,
+        isCorrect
+      };
+    });
+
+    return res.json({
+      attempt,
+      breakdown
     });
   });
 
@@ -646,12 +924,15 @@ async function startServer() {
       return res.status(403).json({ error: 'Access Denied.' });
     }
 
-    const { quizTitle, accessCode, isOpen, durationMinutes, allowReviewAfterClose } = req.body;
+    const { quizTitle, accessCode, adminPasskey, isOpen, durationMinutes, allowReviewAfterClose } = req.body;
     const adminEmail = req.headers['x-admin-email'] as string;
 
     if (quizTitle !== undefined) globalSettings.quizTitle = String(quizTitle).trim();
     if (accessCode !== undefined && String(accessCode).trim()) {
       globalSettings.accessCode = String(accessCode).trim();
+    }
+    if (adminPasskey !== undefined && String(adminPasskey).trim()) {
+      globalSettings.adminPasskey = String(adminPasskey).trim();
     }
     if (isOpen !== undefined) globalSettings.isOpen = Boolean(isOpen);
     if (durationMinutes !== undefined && Number(durationMinutes) > 0) {
