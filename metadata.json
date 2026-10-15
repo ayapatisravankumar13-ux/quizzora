@@ -1,0 +1,6 @@
+{
+  "name": "QUIZZORA",
+  "description": "College Quiz Competition Portal - Think Fast. Answer Smart. Score High.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

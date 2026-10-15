@@ -1,0 +1,217 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "Registered or authenticated student participant for the quiz competition.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Student's full name",
+          "maxLength": 100
+        },
+        "rollNumber": {
+          "type": "string",
+          "description": "College Roll Number normalized",
+          "maxLength": 50,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Student email address",
+          "maxLength": 150
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when student first accessed the portal"
+        }
+      },
+      "required": ["name", "rollNumber", "email", "createdAt"]
+    },
+    "QuizAttempt": {
+      "title": "QuizAttempt",
+      "description": "Student attempt record including answers, timing, and evaluated scores.",
+      "type": "object",
+      "properties": {
+        "studentRoll": {
+          "type": "string",
+          "description": "Normalized College Roll Number",
+          "maxLength": 50
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Student full name",
+          "maxLength": 100
+        },
+        "studentEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Student email",
+          "maxLength": 150
+        },
+        "startTime": {
+          "type": "string",
+          "description": "ISO timestamp when the quiz was started"
+        },
+        "deadline": {
+          "type": "string",
+          "description": "ISO timestamp when the 30-minute timer expires"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["in_progress", "submitted", "expired"],
+          "description": "Current status of the attempt"
+        },
+        "answers": {
+          "type": "object",
+          "description": "Map of question ID or index to chosen option letter"
+        },
+        "score": {
+          "type": "number",
+          "description": "Final score out of 30"
+        },
+        "percentage": {
+          "type": "number",
+          "description": "Percentage score (score / 30) * 100"
+        },
+        "correctCount": {
+          "type": "number",
+          "description": "Count of correctly answered questions"
+        },
+        "incorrectCount": {
+          "type": "number",
+          "description": "Count of incorrectly answered questions"
+        },
+        "unansweredCount": {
+          "type": "number",
+          "description": "Count of unanswered questions"
+        },
+        "timeTakenSeconds": {
+          "type": "number",
+          "description": "Duration in seconds taken for the quiz"
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "ISO timestamp when submitted"
+        },
+        "submissionReceipt": {
+          "type": "string",
+          "description": "Unique verification receipt identifier",
+          "maxLength": 64
+        }
+      },
+      "required": ["studentRoll", "studentName", "studentEmail", "startTime", "deadline", "status"]
+    },
+    "QuizSettings": {
+      "title": "QuizSettings",
+      "description": "Global competition settings controlled by administrators.",
+      "type": "object",
+      "properties": {
+        "quizTitle": {
+          "type": "string",
+          "description": "Title of the competition",
+          "maxLength": 150
+        },
+        "accessCode": {
+          "type": "string",
+          "description": "Access code required to enter the quiz",
+          "maxLength": 50
+        },
+        "isOpen": {
+          "type": "boolean",
+          "description": "Whether the quiz is currently accepting submissions"
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "Duration in minutes allowed for quiz attempts"
+        },
+        "allowReviewAfterClose": {
+          "type": "boolean",
+          "description": "Allow students to view detailed question breakdown once quiz is closed"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of last settings modification"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Email or ID of admin who made the update"
+        }
+      },
+      "required": ["quizTitle", "accessCode", "isOpen", "durationMinutes"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Explicitly authorized administrator records.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Admin email address",
+          "maxLength": 150
+        },
+        "role": {
+          "type": "string",
+          "enum": ["super_admin", "admin"],
+          "description": "Administrative permission tier"
+        },
+        "addedAt": {
+          "type": "string",
+          "description": "Timestamp when admin access was granted"
+        }
+      },
+      "required": ["email", "role"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Administrative actions audit log.",
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "Action executed",
+          "maxLength": 100
+        },
+        "details": {
+          "type": "string",
+          "description": "Description of the operation and target",
+          "maxLength": 500
+        },
+        "performedBy": {
+          "type": "string",
+          "description": "Admin email who performed the action",
+          "maxLength": 150
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp when action occurred"
+        }
+      },
+      "required": ["action", "details", "performedBy", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/students/{rollNumber}": {
+      "schema": "Student",
+      "description": "Stores student directory and eligibility"
+    },
+    "/attempts/{attemptId}": {
+      "schema": "QuizAttempt",
+      "description": "Stores individual student quiz attempts, answers, and graded results"
+    },
+    "/settings/config": {
+      "schema": "QuizSettings",
+      "description": "Global competition configuration and access code"
+    },
+    "/admins/{adminUid}": {
+      "schema": "AdminUser",
+      "description": "Collection of authorized administrators"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Audit trail for admin actions"
+    }
+  }
+}

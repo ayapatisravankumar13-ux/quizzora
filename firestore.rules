@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'ayapatisravankumar13@gmail.com' && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Default deny all unknown paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Students collection (Admin managed and viewable)
+    match /students/{rollNumber} {
+      allow get: if isAdmin() || (isSignedIn() && request.auth.uid == rollNumber);
+      allow list: if isAdmin();
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Attempts collection
+    // Admins can view all attempts and manage them.
+    // Individual attempts can only be read by verified admins or via secure backend.
+    match /attempts/{attemptId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Global competition settings and access code
+    // Strictly restricted to admins to prevent students uncovering secret access codes.
+    match /settings/{settingId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Administrators registry
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Immutable audit logs
+    match /auditLogs/{logId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+  }
+}
