@@ -183,9 +183,10 @@ function gradeAttempt(answers: Record<number, 'A' | 'B' | 'C' | 'D'>) {
   return { score, percentage, correctCount, incorrectCount, unansweredCount };
 }
 
+export const app = express();
+app.use(express.json());
+
 async function startServer() {
-  const app = express();
-  app.use(express.json());
 
   // -------------------------------------------------------------
   // Public Quiz Info
@@ -1039,9 +1040,15 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`QUIZZORA full-stack server running on http://0.0.0.0:${PORT}`);
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`QUIZZORA full-stack server running on http://0.0.0.0:${PORT}`);
+    });
+  }
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
